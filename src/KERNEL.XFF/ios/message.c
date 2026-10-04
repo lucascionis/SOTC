@@ -18,7 +18,65 @@ void func_40016BD0(iosThread* arg0);
 
 
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/message", iosSendMsg);
+s32 iosSendMsg(t_iosMessageQueue* queue, s32 message, s32 wait)
+{
+    union MessageSlot { s32 value; void* pointer; };
+    s32 next;
+    iosThread* receiver;
+    s32 result;
+    iosThread* wake;
+    iosThread* head;
+    iosThread* tail;
+    iosThread* self;
+    iosThread* link;
+    iosThread* node;
+
+    wake = NULL;
+    self = iosGetThread();
+loop:
+    WaitSema(iosSystemSema);
+    if (queue->unk8 < queue->unk4)
+    {
+        result = 0;
+        ((union MessageSlot*)queue->unk0)[queue->unkC * 2].value = message;
+        next = queue->unkC + 1;
+        receiver = queue->unk14;
+        queue->unk8++;
+        queue->unkC = next >= queue->unk4 ? 0 : next;
+        if (receiver != NULL)
+        {
+            if (wake != NULL)
+                asm volatile("break 0" : : "r"(receiver) : "memory");
+            wake = receiver;
+            queue->unk14 = NULL;
+        }
+    }
+    else
+        result = -1;
+    if (result == -1 && wait == 1)
+    {
+        head = queue->unk18;
+        self->unk28 = NULL;
+        if (head != NULL)
+        {
+            while (head->unk28 != NULL)
+                head = head->unk28;
+            head->unk28 = self;
+        }
+        else
+            queue->unk18 = self;
+        SignalSema(iosSystemSema);
+        iosSleepThread();
+        if (queue->unk0 == NULL)
+            return result;
+        goto loop;
+    }
+    if (wake != NULL)
+        iosCallBackThreadMgr(func_40016BB8, (s32)wake);
+    SignalSema(iosSystemSema);
+    return result;
+}
+
 
 //INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/message", iosRecvMsg);
 s32 iosRecvMsg(t_iosMessageQueue* arg0, s32* arg1, s32 arg2)

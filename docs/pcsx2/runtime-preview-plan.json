@@ -1,0 +1,376 @@
+{
+  "frame_count": 36000,
+  "fps": 60,
+  "emulator_version": "PCSX2-v2.8.2",
+  "author": "Codex runtime check",
+  "game_name": "Wanda to Kyozou",
+  "segments": [
+    {
+      "start_frame": 720,
+      "end_frame": 735,
+      "buttons": [
+        "down"
+      ]
+    },
+    {
+      "start_frame": 840,
+      "end_frame": 855,
+      "buttons": [
+        "cross"
+      ]
+    },
+    {
+      "start_frame": 1320,
+      "end_frame": 1335,
+      "buttons": [
+        "start"
+      ]
+    },
+    {
+      "start_frame": 1440,
+      "end_frame": 1455,
+      "buttons": [
+        "cross"
+      ]
+    },
+    {
+      "start_frame": 1560,
+      "end_frame": 1575,
+      "buttons": [
+        "cross"
+      ]
+    },
+    {
+      "start_frame": 2100,
+      "end_frame": 2115,
+      "buttons": [
+        "start"
+      ]
+    },
+    {
+      "start_frame": 2220,
+      "end_frame": 2235,
+      "buttons": [
+        "cross"
+      ]
+    },
+    {
+      "start_frame": 6000,
+      "end_frame": 6030,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "cross"
+      ]
+    },
+    {
+      "start_frame": 6600,
+      "end_frame": 6780,
+      "left": [
+        127,
+        0
+      ],
+      "right": [
+        127,
+        127
+      ]
+    },
+    {
+      "start_frame": 7200,
+      "end_frame": 7320,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        220,
+        127
+      ]
+    },
+    {
+      "start_frame": 7800,
+      "end_frame": 7830,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "triangle"
+      ]
+    },
+    {
+      "start_frame": 8400,
+      "end_frame": 8430,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "square"
+      ]
+    },
+    {
+      "start_frame": 9000,
+      "end_frame": 9120,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "circle"
+      ]
+    },
+    {
+      "start_frame": 10800,
+      "end_frame": 11400,
+      "left": [
+        127,
+        255
+      ],
+      "right": [
+        127,
+        127
+      ]
+    },
+    {
+      "start_frame": 11700,
+      "end_frame": 12000,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        240,
+        127
+      ]
+    },
+    {
+      "start_frame": 12300,
+      "end_frame": 12420,
+      "left": [
+        127,
+        0
+      ],
+      "right": [
+        127,
+        127
+      ]
+    },
+    {
+      "start_frame": 12900,
+      "end_frame": 12930,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "triangle"
+      ]
+    },
+    {
+      "start_frame": 13500,
+      "end_frame": 13620,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "circle"
+      ]
+    },
+    {
+      "start_frame": 16800,
+      "end_frame": 18000,
+      "left": [
+        127,
+        255
+      ],
+      "right": [
+        127,
+        127
+      ]
+    },
+    {
+      "start_frame": 18600,
+      "end_frame": 18900,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        240,
+        127
+      ]
+    },
+    {
+      "start_frame": 19500,
+      "end_frame": 20700,
+      "left": [
+        127,
+        255
+      ],
+      "right": [
+        127,
+        127
+      ]
+    },
+    {
+      "start_frame": 22800,
+      "end_frame": 23040,
+      "left": [
+        255,
+        0
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "cross"
+      ]
+    },
+    {
+      "start_frame": 23400,
+      "end_frame": 24300,
+      "left": [
+        127,
+        0
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "cross"
+      ]
+    },
+    {
+      "start_frame": 24600,
+      "end_frame": 24630,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "triangle"
+      ]
+    },
+    {
+      "start_frame": 25200,
+      "end_frame": 25500,
+      "left": [
+        127,
+        255
+      ],
+      "right": [
+        127,
+        127
+      ]
+    },
+    {
+      "start_frame": 27000,
+      "end_frame": 27090,
+      "left": [
+        0,
+        0
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "cross"
+      ]
+    },
+    {
+      "start_frame": 27300,
+      "end_frame": 28500,
+      "left": [
+        127,
+        0
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "cross"
+      ]
+    },
+    {
+      "start_frame": 28800,
+      "end_frame": 28830,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "select"
+      ]
+    },
+    {
+      "start_frame": 29160,
+      "end_frame": 29190,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "select"
+      ]
+    },
+    {
+      "start_frame": 33000,
+      "end_frame": 33030,
+      "left": [
+        127,
+        127
+      ],
+      "right": [
+        127,
+        127
+      ],
+      "buttons": [
+        "start"
+      ]
+    }
+  ]
+}

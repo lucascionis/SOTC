@@ -16,6 +16,7 @@ typedef struct{
 
 
 
+s32 iosSendMsg(t_iosMessageQueue* queue, s32 message, s32 wait);
 s32 iosRecvMsg(t_iosMessageQueue* arg0, s32* arg1, s32 arg2);
 void iosInitMessageSystem(void);
 void iosCreateMsgQueue(t_iosMessageQueue* arg0, void* arg1, s32 arg2);

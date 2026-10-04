@@ -32,5 +32,25 @@ We are currently targeting the Preview Version's main ELF (``SCPS_150.97``, sha1
 2. From a Shadow of the Colossus Preview Version ISO, extract ``SCPS_150.97`` and ``KERNEL.XFF`` into the ``iso`` directory
 3. Just run ``make`` to build all modules (``make loader`` or ``make kernel`` to build just one module. ``make clean`` also works)
 
+### Build and test in PCSX2
+
+The local pipeline performs a clean build, checks matching before XFF patching,
+and creates a separate Preview ISO containing the rebuilt loader and kernel.
+It launches PCSX2 with isolated settings and keeps logs and an observed test
+result. See [the PCSX2 test guide](docs/PCSX2_TESTING.md).
+
+```sh
+export SOTC_PREVIEW_ISO="/path/to/SotC Preview.iso"
+export PCSX2_BIN="/path/to/PCSX2.app" # or pcsx2-qt executable
+make pcsx2-prepare
+make pcsx2-check-config
+make pcsx2-run
+```
+
+`make pcsx2` prepares and launches in one command. A successful build or launch
+does not mark the runtime test as passed; checkpoints must be observed and
+recorded. The existing GitHub workflow checks the build and matching; PCSX2
+execution runs locally with your configured BIOS and Preview disc.
+
 ## Contributing
 Use our [contribution guide](docs/CONTRIBUTING.md).

@@ -1,5 +1,13 @@
 #include "common.h"
+#include "ios/math.h"
+#include "gcc/math.h"
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/math/power", iosPowf);
+f32 iosPowf(f32 base, f32 exponent)
+{
+    return powf(base, exponent);
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/math/power", iosFastPowf);
+f32 iosFastPowf(f32 base, f32 exponent)
+{
+    return powf(base, exponent);
+}

@@ -1,5 +1,10 @@
 #include "common.h"
 
+extern UNK_PTR D_40045A00;
+extern UNK_PTR D_40045A04;
+extern char D_40092688[];
+extern void iosDlChainTailCurrent(UNK_PTR);
+
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", func_40024218);
 
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosCreateDC);
@@ -20,19 +25,34 @@ INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosPushDC);
 
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosPopDC);
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosGetRootDC);
+UNK_PTR iosGetRootDC(void)
+{
+    return D_40045A04;
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosSetRootDC);
+void iosSetRootDC(void)
+{
+    iosDlChainTailCurrent(D_40045A04);
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosGetCurrentDC);
+UNK_PTR iosGetCurrentDC(void)
+{
+    return D_40045A00;
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosSetCurrentDC);
+void iosSetCurrentDC(void)
+{
+    iosDlChainTailCurrent(D_40045A00);
+}
 
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosResetDC);
 
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosInitDC);
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/dc", iosGetDCGroup);
+void *iosGetDCGroup(void)
+{
+    return D_40092688;
+}
 
 void func_40024A30(void)
 {}

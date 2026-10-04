@@ -25,6 +25,10 @@ static LetterType* D_400F5B98[20];
 // prototypes
 void func_4002D1E0(Letter*, s32, s32, LetterType*);
 void func_4002D638(LetterPost* arg0);
+s32 func_4002D480(struct letter_unkstrc*, Letter*, LetterType*);
+extern void* isysGroupForFirst(s32 group, s32 mode);
+extern void* isysGroupForNext(void* link, s32 mode);
+extern void isysGroupForExit(struct letter_unkstrc* obj, s32 mode);
 
 
 
@@ -166,7 +170,26 @@ void increment_letter_refcount(Letter* arg0)
     arg0->refCount += 1;
 }
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/isys/letter", decrement_letter_refcount);
+s32 decrement_letter_refcount(LetterLink* link)
+{
+    s32 freed = 0;
+    volatile Letter* letter = link->letter;
+    volatile Letter* next;
+
+    if (letter != NULL)
+    {
+        letter->refCount--;
+        /* Preserve the original pointer reload after updating the reference count. */
+        next = *(volatile Letter* volatile*)&link->letter;
+        if (next->refCount == 0)
+        {
+            iosFree((void*)next);
+            freed = 1;
+        }
+        link->letter = NULL;
+    }
+    return freed;
+}
 
 //INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/isys/letter", is_letter_reach_time);
 s32 is_letter_reach_time(Letter* arg0, f32 arg1)
@@ -202,7 +225,55 @@ s32 get_letter_receiver_data(Letter* arg0)
     return arg0->receiverData;
 }
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/isys/letter", doit_letter_manager);
+void doit_letter_manager(void)
+{
+    register Letter* savedArgRegister __asm__("a0");
+    void* link;
+    Letter* letter;
+    LetterType* type;
+    struct letter_unkstrc* obj;
+    struct letter_unkstrc* receiver;
+
+    open_letter_post(D_400F5B90);
+    while ((letter = get_next_letter_in_post(D_400F5B90)) != NULL)
+    {
+        type = get_reference_letter_type(letter);
+        /* Capture a0 without emitting code. Keeping it live on the direct path
+         * prevents GCC 2.96 from replacing the original bnel with bne. */
+        __asm__ volatile("" : "=r"(savedArgRegister));
+        if (type->unk0 == 0)
+        {
+            __asm__ volatile("" : : "r"(savedArgRegister));
+            receiver = isysGetLetterObj((struct letter_unkstrc*)get_letter_receiver_obj_group(letter));
+            if (receiver != NULL)
+                func_4002D480(receiver, letter, type);
+            else
+                __asm__ volatile("break 0");
+        }
+        else
+        {
+            obj = NULL;
+            link = isysGroupForFirst(get_letter_receiver_obj_group(letter), 0);
+            while (link != NULL)
+            {
+                obj = *(struct letter_unkstrc**)link;
+                receiver = isysGetLetterObj(obj);
+                if (receiver != NULL)
+                {
+                    if (func_4002D480(receiver, letter, type) == 1 && type->unk0 == 1)
+                        break;
+                }
+                else
+                    __asm__ volatile("break 0");
+                link = isysGroupForNext(link, 0);
+            }
+            if (obj != NULL)
+                isysGroupForExit(obj, 0);
+        }
+    }
+    discard_all_letter_in_post(D_400F5B90);
+    close_letter_post(D_400F5B90);
+}
 
 //INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/isys/letter", init_letter_manager);
 void init_letter_manager(void)
@@ -295,7 +366,26 @@ void open_letter_post(LetterPost* arg0)
     arg0->reading = arg0->letters_tail;
 }
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/isys/letter", get_next_letter_in_post);
+Letter* get_next_letter_in_post(LetterPost* post)
+{
+    LetterLink* link = post->reading;
+    LetterLink* next;
+    Letter* letter;
+
+    if (link != NULL)
+    {
+        post->read = link;
+        /* Preserve the original order of the two link reads. */
+        next = *(LetterLink* volatile*)&link->next;
+        letter = (Letter*)*(volatile Letter* volatile*)&link->letter;
+        post->reading = next;
+    }
+    else
+    {
+        letter = NULL;
+    }
+    return letter;
+}
 
 //INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/isys/letter", close_letter_post);
 void close_letter_post(LetterPost* arg0)
@@ -314,7 +404,29 @@ void func_4002D638(LetterPost* arg0)
     arg0->reading = NULL;
 }
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/isys/letter", push_back_letter_in_post);
+void push_back_letter_in_post(LetterPost* post, volatile Letter* letter)
+{
+    LetterLink* link;
+
+    link = iosMallocAlign((s32)g_pLetterMem, sizeof(LetterLink), 0x10);
+    link->letter = letter;
+    link->next = NULL;
+    increment_letter_refcount((Letter*)letter);
+    if (post->letterCount == 0)
+    {
+        link->prev = NULL;
+        post->letters_tail = link;
+        post->letters_head = link;
+    }
+    else
+    {
+        link->prev = post->letters_head;
+        post->letters_head->next = link;
+        post->letters_head = link;
+    }
+    /* Reload the count on both paths, as in the original implementation. */
+    post->letterCount = *(volatile s32*)&post->letterCount + 1;
+}
 
 //INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/isys/letter", discard_selecting_letter_in_post);
 void discard_selecting_letter_in_post(LetterPost* arg0)

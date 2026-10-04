@@ -22,6 +22,7 @@ typedef struct {
 
 
 void AddStrHashKey(volatile t_hashTable* hTable, volatile t_hashedSym* hSym);
+void InitStrHash(t_hashTable* hTable, s32 heap, s32 count);
 void DeleteStrHashKey(t_hashTable* hTable, t_hashedSym* sym);
 s32 GetStrHashWorkBuffer(s32 shift, s32 index);
 u32 MakeStrHashValue(const char* str);

@@ -36,4 +36,23 @@ clean:
 	@rm -rf *.ninja
 .PHONY : clean
 
+# Local build + verified Preview disc + PCSX2 runtime check.
+PYTHON ?= python3
+
+pcsx2-prepare:
+	$(PYTHON) scripts/pcsx2_check.py prepare
+
+pcsx2-run:
+	$(PYTHON) scripts/pcsx2_check.py run
+
+pcsx2-check-config:
+	$(PYTHON) scripts/pcsx2_check.py run --check-config
+
+pcsx2: pcsx2-prepare
+	$(PYTHON) scripts/pcsx2_check.py run
+
+test-pipeline:
+	$(PYTHON) -m unittest discover -s tools/tests -v
+
+.PHONY: pcsx2 pcsx2-prepare pcsx2-run pcsx2-check-config test-pipeline
 

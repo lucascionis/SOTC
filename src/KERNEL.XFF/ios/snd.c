@@ -1,5 +1,13 @@
 #include "common.h"
 
+extern void (*D_400F6D88)(void);
+extern void (*D_400F6D8C)(void);
+extern s32 soundTickProcCnt;
+extern s32 sg2NicoReverbMode;
+extern s32 D_40045EA8;
+extern void *Sg2SlotTbl(s32);
+extern void Sg2SlotSetOutputMode(s32);
+
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", func_4002F2A8);
 
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", sndSepTickProc);
@@ -49,16 +57,43 @@ INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", initSound);
 
 INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", tickProcSound);
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", addAdpcmTickProcFunc);
+void addAdpcmTickProcFunc(void (*callback)(void))
+{
+    D_400F6D88 = callback;
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", setPcmTickProcFunc);
+void setPcmTickProcFunc(void (*callback)(void))
+{
+    D_400F6D8C = callback;
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", soundGetTickProcCnt);
+s32 soundGetTickProcCnt(void)
+{
+    return soundTickProcCnt;
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", soundSetRevMode);
+void soundSetRevMode(s32 mode, s32 mask)
+{
+    if (mode == 0)
+        sg2NicoReverbMode |= mask;
+    else
+        sg2NicoReverbMode &= ~mask;
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", soundGetRevMode);
+s32 soundGetRevMode(void)
+{
+    return sg2NicoReverbMode;
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", getSlotInfo);
+void *getSlotInfo(s32 slot)
+{
+    return Sg2SlotTbl(slot);
+}
 
-INCLUDE_ASM("asm/KERNEL.XFF/nonmatchings/ios/snd", setSoundMode);
+void setSoundMode(s32 mode)
+{
+    D_40045EA8 = mode != 0 ? 1 : 2;
+    Sg2SlotSetOutputMode(D_40045EA8);
+}
+
+asm(".align 3");

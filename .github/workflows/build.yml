@@ -31,6 +31,9 @@ jobs:
         run: |
             scripts/setup_compiler.sh
 
+      - name: Test verification and disc preparation tools
+        run: python3 -m unittest discover -s tools/tests -v
+
       - name: Setup Ninja
         run: |
           sudo apt-get update
@@ -53,3 +56,18 @@ jobs:
         run: |
           source .python3/bin/activate
           make kernel
+
+      - name: Verify kernel instructions before XFF patching
+        run: |
+          mkdir -p target/ci
+          python3 tools/verify_kernel.py --original iso/KERNEL.XFF \
+            --compiled build/KERNEL.XFF/KERNEL.XFF.elf \
+            --report target/ci/kernel-verification.json
+
+      - name: Save verification report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-verification
+          path: target/ci/kernel-verification.json
+          if-no-files-found: ignore
