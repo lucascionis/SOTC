@@ -5,6 +5,7 @@
 [contributors-badge]: https://img.shields.io/github/contributors/Fantaskink/SOTC?color=green
 
 <!-- Shields -->
+![Loader progress](docs/progress/loader.svg) ![Kernel progress](docs/progress/kernel.svg)
 [![Contributors][contributors-badge]][contributors-url]
 
 We are currently targeting the Preview Version's main ELF (``SCPS_150.97``, sha1: ``c4d5576d1cae3721c411a746c7845f5c6f026dbb``).
@@ -15,8 +16,9 @@ Functions still supplied by assembly count as incomplete; handwritten startup
 assembly (`sdk/crt0`) counts as complete. This measures source reconstruction,
 not runtime test coverage or completion of the whole game.
 
-The upstream progress badges use a shared service and do not track this fork.
-After building both modules, calculate this checkout's progress locally:
+The counters above are generated from this fork's builds and refreshed by CI
+after a successful build on `main`. After building both modules, calculate this
+checkout's progress locally:
 
 ```sh
 ./.python3/bin/python scripts/upload_progress.py --dry-run
@@ -24,6 +26,8 @@ After building both modules, calculate this checkout's progress locally:
 
 This prints byte totals and percentages without uploading. Missing map files
 or assembly directories cause an error instead of a misleading 100% result.
+To refresh the README counters locally, use `--update-badges` instead of
+`--dry-run`, then commit the two generated files in `docs/progress`.
 
 <a href="https://discord.gg/WGSnPQFtHU" target="_blank">
   <img src="https://discord.com/api/guilds/465610776762384394/widget.png?style=banner2" alt="Discord Banner">

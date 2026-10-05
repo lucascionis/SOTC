@@ -11,6 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v2
@@ -69,7 +71,24 @@ jobs:
       - name: Calculate local decompilation progress
         run: |
           source .python3/bin/activate
-          python3 scripts/upload_progress.py --dry-run
+          python3 scripts/upload_progress.py --update-badges
+
+      - name: Update fork README counters
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse origin/main)" != "$GITHUB_SHA" ]; then
+            echo "A newer commit is on main; its build will update the counters."
+            exit 0
+          fi
+          git add docs/progress/loader.svg docs/progress/kernel.svg
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update decompilation progress counters [skip ci]"
+          git push origin HEAD:main
 
       - name: Save verification report
         if: always()

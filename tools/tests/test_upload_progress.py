@@ -1,9 +1,11 @@
 """Regression checks for progress accounting; no original binaries needed."""
 
 import importlib.util
+import argparse
 from pathlib import Path
 import tempfile
 import unittest
+import xml.etree.ElementTree as ET
 from unittest.mock import patch
 
 import mapfile_parser
@@ -89,6 +91,41 @@ class UploadProgressTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 progress.processMapFiles(progress.MAP_FILES, "test-key")
             upload.assert_not_called()
+
+    def test_badges_render_measured_percentages_and_byte_counts(self):
+        results = [
+            ("loader", (mapfile_parser.ProgressStats(decompedSize=16, undecompedSize=48), {})),
+            ("kernel", (mapfile_parser.ProgressStats(decompedSize=32, undecompedSize=32), {})),
+        ]
+        with patch.object(progress, "ROOT", self.root):
+            progress.writeProgressBadges(results)
+        for category, label, percentage in [("loader", "SCPS_150.97", "25.00%"),
+                                             ("kernel", "KERNEL.XFF", "50.00%")]:
+            svg = ET.parse(self.root / f"docs/progress/{category}.svg").getroot()
+            self.assertIn(f"{label}: {percentage}", svg.attrib["aria-label"])
+            self.assertIn("/ 64 bytes reconstructed", svg.attrib["aria-label"])
+            self.assertIn(percentage, "".join(svg.itertext()))
+
+    def test_invalid_statistics_do_not_replace_existing_badges(self):
+        directory = self.root / "docs/progress"
+        directory.mkdir(parents=True)
+        badge = directory / "loader.svg"
+        badge.write_text("previous counter")
+        results = [("loader", (mapfile_parser.ProgressStats(decompedSize=16), {})),
+                   ("kernel", (mapfile_parser.ProgressStats(), {}))]
+        with patch.object(progress, "ROOT", self.root):
+            with self.assertRaises(ValueError):
+                progress.writeProgressBadges(results)
+        self.assertEqual(badge.read_text(), "previous counter")
+
+    def test_update_badges_does_not_upload_or_require_a_key(self):
+        args = argparse.Namespace(frogress_api_key=None, dry_run=False, update_badges=True)
+        with patch.object(progress, "processMapFiles", return_value=[]) as calculate, patch.object(
+            progress, "writeProgressBadges"
+        ) as write:
+            progress.main(args)
+            calculate.assert_called_once_with(progress.MAP_FILES, None, dry_run=True)
+            write.assert_called_once_with([])
 
 
 if __name__ == "__main__":

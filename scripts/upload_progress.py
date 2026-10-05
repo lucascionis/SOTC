@@ -5,6 +5,7 @@ Adapted from https://github.com/zeldaret/af/blob/aeb01dcb95e8281f89f355604dbeba5
 MIT License: https://opensource.org/license/mit
 """
 from pathlib import Path
+from html import escape
 import argparse
 import mapfile_parser
 
@@ -109,7 +110,33 @@ def getProgress(mapPath: str, asmPath: str) -> tuple[mapfile_parser.ProgressStat
 
     return progress
 
-def processMapFiles(mapFiles: list[tuple[str, str, str]], frogress_api_key: str | None, dry_run: bool = False) -> None:
+def writeProgressBadges(results: list[tuple[str, tuple[mapfile_parser.ProgressStats, dict[str, mapfile_parser.ProgressStats]]]]) -> None:
+    """Save fork-local SVG counters for GitHub's README renderer."""
+    labels = {category: asmDir for _, asmDir, category in MAP_FILES}
+    badges = {}
+    for category, (stats, _) in results:
+        if category not in labels or stats.total <= 0:
+            raise ValueError(f"Invalid badge statistics: {category}")
+        label = escape(labels[category])
+        percentage = f"{stats.decompedPercentage():.2f}%"
+        title = f"{label}: {percentage} ({stats.decompedSize:,} / {stats.total:,} bytes reconstructed)"
+        badges[category] = f'''<svg xmlns="http://www.w3.org/2000/svg" width="185" height="20" role="img" aria-label="{title}">
+  <title>{title}</title>
+  <rect width="185" height="20" rx="3" fill="#555"/>
+  <path d="M115 0h67a3 3 0 0 1 3 3v14a3 3 0 0 1-3 3h-67z" fill="#287b35"/>
+  <g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,sans-serif" font-size="11">
+    <text x="57.5" y="14">{label}</text>
+    <text x="150" y="14">{percentage}</text>
+  </g>
+</svg>
+'''
+    directory = ROOT / "docs/progress"
+    directory.mkdir(parents=True, exist_ok=True)
+    for category, svg in badges.items():
+        (directory / f"{category}.svg").write_text(svg, encoding="utf-8")
+
+
+def processMapFiles(mapFiles: list[tuple[str, str, str]], frogress_api_key: str | None, dry_run: bool = False) -> list:
     """
     Processes a list of map files and uploads their progress to frogress.
     """
@@ -128,21 +155,26 @@ def processMapFiles(mapFiles: list[tuple[str, str, str]], frogress_api_key: str 
         # Service categories are independent of the on-disk assembly directories.
         if not dry_run:
             mapfile_parser.frontends.upload_frogress.uploadEntriesToFrogress(codeEntries, category, url, apikey=frogress_api_key, verbose=True)
+    return results
 
 def main(args: argparse.Namespace) -> None:
     """
     Main function, calculates the progress and uploads it to frogress.
     """
     frogress_api_key = args.frogress_api_key
-    if not frogress_api_key and not args.dry_run:
+    report_only = args.dry_run or args.update_badges
+    if not frogress_api_key and not report_only:
         raise ValueError("Missing frogress API key.")
 
-    processMapFiles(MAP_FILES, frogress_api_key, dry_run=args.dry_run)
+    results = processMapFiles(MAP_FILES, frogress_api_key, dry_run=report_only)
+    if args.update_badges:
+        writeProgressBadges(results)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Upload progress to the frogress")
     parser.add_argument("--frogress_api_key", help="API key for the frogress")
     parser.add_argument("--dry-run", action="store_true", help="Print local progress without uploading or requiring an API key")
+    parser.add_argument("--update-badges", action="store_true", help="Refresh README SVG counters from local builds without uploading")
 
     args = parser.parse_args()
     main(args)
