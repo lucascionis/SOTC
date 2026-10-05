@@ -1,15 +1,29 @@
 # Shadow of the Colossus Decompilation Project
-[loader-progress-badge]: https://img.shields.io/endpoint?url=https%3A%2F%2Fprogress.deco.mp%2Fdata%2Fsotc%2Fpreview%2Floader%2F%3Fmode%3Dshield%26measure%3Dloader&style=flat&label=SCPS_150.97
-[kernel-progress-badge]: https://img.shields.io/endpoint?url=https%3A%2F%2Fprogress.deco.mp%2Fdata%2Fsotc%2Fpreview%2Fkernel%2F%3Fmode%3Dshield%26measure%3Dkernel&style=flat&label=KERNEL.XFF
 
 <!-- Contributors shield -->
 [contributors-url]: https://github.com/Fantaskink/SOTC/graphs/contributors
 [contributors-badge]: https://img.shields.io/github/contributors/Fantaskink/SOTC?color=green
 
 <!-- Shields -->
-![loader-progress-badge] ![kernel-progress-badge] [![Contributors][contributors-badge]][contributors-url]
+[![Contributors][contributors-badge]][contributors-url]
 
 We are currently targeting the Preview Version's main ELF (``SCPS_150.97``, sha1: ``c4d5576d1cae3721c411a746c7845f5c6f026dbb``).
+
+Decompilation progress is measured separately for the loader (`SCPS_150.97`)
+and kernel (`KERNEL.XFF`), by symbol size in the linked `.text` sections.
+Functions still supplied by assembly count as incomplete; handwritten startup
+assembly (`sdk/crt0`) counts as complete. This measures source reconstruction,
+not runtime test coverage or completion of the whole game.
+
+The upstream progress badges use a shared service and do not track this fork.
+After building both modules, calculate this checkout's progress locally:
+
+```sh
+./.python3/bin/python scripts/upload_progress.py --dry-run
+```
+
+This prints byte totals and percentages without uploading. Missing map files
+or assembly directories cause an error instead of a misleading 100% result.
 
 <a href="https://discord.gg/WGSnPQFtHU" target="_blank">
   <img src="https://discord.com/api/guilds/465610776762384394/widget.png?style=banner2" alt="Discord Banner">

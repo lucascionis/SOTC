@@ -32,7 +32,9 @@ jobs:
             scripts/setup_compiler.sh
 
       - name: Test verification and disc preparation tools
-        run: python3 -m unittest discover -s tools/tests -v
+        run: |
+          source .python3/bin/activate
+          python3 -m unittest discover -s tools/tests -v
 
       - name: Setup Ninja
         run: |
@@ -63,6 +65,11 @@ jobs:
           python3 tools/verify_kernel.py --original iso/KERNEL.XFF \
             --compiled build/KERNEL.XFF/KERNEL.XFF.elf \
             --report target/ci/kernel-verification.json
+
+      - name: Calculate local decompilation progress
+        run: |
+          source .python3/bin/activate
+          python3 scripts/upload_progress.py --dry-run
 
       - name: Save verification report
         if: always()

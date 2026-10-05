@@ -5,17 +5,25 @@ Adapted from https://github.com/zeldaret/af/blob/aeb01dcb95e8281f89f355604dbeba5
 MIT License: https://opensource.org/license/mit
 """
 from pathlib import Path
-from datetime import datetime
 import argparse
 import mapfile_parser
 
-ASMPATH = Path("asm")
+ROOT = Path(__file__).resolve().parents[1]
+ASMPATH = ROOT / "asm"
 NONMATCHINGS = "nonmatchings"
 BASE_URL = "https://progress.deco.mp"
 SLUG = "sotc"
 VERSION = "preview"
+MAP_FILES = [
+    ("build/SCPS_150.97/SCPS_150.97.map", "SCPS_150.97", "loader"),
+    ("build/KERNEL.XFF/KERNEL.XFF.map", "KERNEL.XFF", "kernel"),
+]
 
-def getProgressFromMapFile(mapFile: mapfile_parser.MapFile, asmPath: Path, nonmatchings: Path, aliases: dict[str, str]=dict(), pathIndex: int=2) -> tuple[mapfile_parser.ProgressStats, dict[str, mapfile_parser.ProgressStats]]:
+def getProgressFromMapFile(mapFile: mapfile_parser.MapFile, asmPath: Path, nonmatchings: Path, aliases: dict[str, str] | None = None) -> tuple[mapfile_parser.ProgressStats, dict[str, mapfile_parser.ProgressStats]]:
+    for directory in (asmPath, nonmatchings):
+        if not directory.is_dir():
+            raise FileNotFoundError(f"Missing assembly directory: {directory}. Run make first.")
+    aliases = aliases or {}
     totalStats = mapfile_parser.ProgressStats()
     progressPerFolder: dict[str, mapfile_parser.ProgressStats] = dict()
 
@@ -24,7 +32,20 @@ def getProgressFromMapFile(mapFile: mapfile_parser.MapFile, asmPath: Path, nonma
             if len(file) == 0:
                 continue
 
-            folder = file.filepath.parts[pathIndex]
+            # Objects are build/<module>/{src,asm}/<module>/<source>.{c,s}.o.
+            # Keep only the source path within the module, including dotted names.
+            objectPath = Path(file.filepath)
+            for kind in ("src", "asm"):
+                prefix = Path("build") / asmPath.name / kind / asmPath.name
+                if objectPath.is_relative_to(prefix):
+                    originalFilePath = objectPath.relative_to(prefix)
+                    break
+            else:
+                raise ValueError(f"Unexpected object path in map: {objectPath}")
+            if originalFilePath.suffixes[-2:] not in ([".c", ".o"], [".s", ".o"]):
+                raise ValueError(f"Unexpected object suffix in map: {objectPath}")
+            extensionlessFilePath = originalFilePath.with_suffix("").with_suffix("")
+            folder = extensionlessFilePath.parts[0]
 
             if ".a" in folder:
                 folder = folder.split('.a')[0]
@@ -35,20 +56,8 @@ def getProgressFromMapFile(mapFile: mapfile_parser.MapFile, asmPath: Path, nonma
             if folder not in progressPerFolder:
                 progressPerFolder[folder] = mapfile_parser.ProgressStats()
 
-            originalFilePath = Path(*file.filepath.parts[pathIndex:])
-
-            extensionlessFilePath = originalFilePath
-            while extensionlessFilePath.suffix:
-                extensionlessFilePath = extensionlessFilePath.with_suffix("")
-
-            fullAsmFile = asmPath / extensionlessFilePath.with_suffix(".s")
-
-            handwrittenAsmFiles = [Path("sdk/crt0.o")]
-
-            if originalFilePath in handwrittenAsmFiles:
-                wholeFileIsUndecomped = False
-            else:
-                wholeFileIsUndecomped = fullAsmFile.exists()
+            # Startup assembly is handwritten and intentionally considered complete.
+            wholeFileIsUndecomped = kind == "asm" and extensionlessFilePath != Path("sdk/crt0")
 
             for func in file:
                 funcAsmPath = nonmatchings / extensionlessFilePath / f"{func.name}.s"
@@ -73,6 +82,9 @@ def getProgress(mapPath: str, asmPath: str) -> tuple[mapfile_parser.ProgressStat
     """
     Gets the progress of the project using the mapfile parser.
     """
+    mapPath = ROOT / mapPath
+    if not mapPath.is_file():
+        raise FileNotFoundError(f"Missing map file: {mapPath}. Run make first.")
     mapFile = mapfile_parser.MapFile()
     mapFile.readMapFile(mapPath)
 
@@ -92,50 +104,45 @@ def getProgress(mapPath: str, asmPath: str) -> tuple[mapfile_parser.ProgressStat
     print(f"Nonmatchings path: {nonMatchingsPath}")
 
     progress = getProgressFromMapFile(mapFile.filterBySectionType(".text"), asmPath, nonMatchingsPath)
+    if progress[0].total == 0:
+        raise ValueError(f"No code symbols found in map: {mapPath}")
 
     return progress
 
-def processMapFiles(mapFiles: list[tuple[str,str]], frogress_api_key: str) -> None:
+def processMapFiles(mapFiles: list[tuple[str, str, str]], frogress_api_key: str | None, dry_run: bool = False) -> None:
     """
     Processes a list of map files and uploads their progress to frogress.
     """
 
-    for mapfilePathStr, mapfileAsmDir in mapFiles:
-        print(f"Processing map file: {mapfilePathStr}")
-
-        # Get progress stats for the current map file
-        codeTotalStats, codeProgressPerFolder = getProgress(mapfilePathStr, mapfileAsmDir)
+    # Validate every module before publishing any result.
+    results = [(category, getProgress(mapPath, asmDir))
+               for mapPath, asmDir, category in mapFiles]
+    for category, (codeTotalStats, codeProgressPerFolder) in results:
+        print(f"Progress: {category}")
         codeEntries = mapfile_parser.frontends.upload_frogress.getFrogressEntriesFromStats(
             codeTotalStats, codeProgressPerFolder, verbose=True
         )
 
-        # Print stats for debugging
-        mapfile_parser.progress_stats.printStats(codeTotalStats, codeProgressPerFolder)
-
         url = mapfile_parser.utils.generateFrogressEndpointUrl(BASE_URL, SLUG, VERSION)
-        
-        # Reuse asm directory as the category name
-        mapfile_parser.frontends.upload_frogress.uploadEntriesToFrogress(codeEntries, mapfileAsmDir, url, apikey=frogress_api_key, verbose=True)
 
-def main(args: argparse.ArgumentParser) -> None:
+        # Service categories are independent of the on-disk assembly directories.
+        if not dry_run:
+            mapfile_parser.frontends.upload_frogress.uploadEntriesToFrogress(codeEntries, category, url, apikey=frogress_api_key, verbose=True)
+
+def main(args: argparse.Namespace) -> None:
     """
     Main function, calculates the progress and uploads it to frogress.
     """
     frogress_api_key = args.frogress_api_key
-    if not frogress_api_key:
+    if not frogress_api_key and not args.dry_run:
         raise ValueError("Missing frogress API key.")
 
-    # Map files and their asm directories
-    mapFiles = [
-        ("build/SCPS_150.97.map", "loader"),
-        ("build/KERNEL.XFF.map", "kernel")
-    ]
-
-    processMapFiles(mapFiles, frogress_api_key)
+    processMapFiles(MAP_FILES, frogress_api_key, dry_run=args.dry_run)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Upload progress to the frogress")
     parser.add_argument("--frogress_api_key", help="API key for the frogress")
+    parser.add_argument("--dry-run", action="store_true", help="Print local progress without uploading or requiring an API key")
 
     args = parser.parse_args()
     main(args)
