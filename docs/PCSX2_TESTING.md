@@ -159,8 +159,12 @@ python3 tools/pcsx2_input_movie.py create \
 The generated movie matches the tested header and all 36,000 declared input
 frames byte for byte. The tested file also contains 36 bytes beyond those
 declared frames; the generated file omits that trailing data. This run amended
-future inputs during playback; a fresh complete playback of the regenerated
-movie still needs observation before claiming repeatability of the outcome.
+future inputs during playback. A fresh complete playback of the regenerated
+movie was observed on 2026-10-05 after completing `memory.c`: boot, temple
+gameplay and the world map worked, but the route reached temple walls and did
+not reproduce mounting/riding Agro. The movie is useful for a smoke test;
+the horse route is not yet a repeatable acceptance check.
+See [the memory campaign runtime report](pcsx2/memory-runtime-2026-10-05.md).
 
 ## Native input replay
 

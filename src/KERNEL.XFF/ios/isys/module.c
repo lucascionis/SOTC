@@ -15,7 +15,6 @@ extern s32 D_40045820;
 extern s32 D_40081A20;
 extern s32 D_40081A28[];
 extern const char D_40046EC0[];
-extern void iosFreeParts(void* ptr, void* start, s32 size);
 void func_4001CFE0(u32 address);
 
 extern isysGroup executableModuleGroup;
